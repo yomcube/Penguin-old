@@ -1,0 +1,10 @@
+# Qt
+*.user
+*.autosave
+#ui_*.h
+Debug
+Release
+
+# Penguin
+*.sav
+*.bin
