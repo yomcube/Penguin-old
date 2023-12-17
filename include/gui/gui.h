@@ -4,5 +4,4 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QStringList>
-
-static int currentSaveFile = 0;
+#include <QDataStream>

@@ -9,9 +9,10 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    src/editorsignals.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/penguin.cpp \
+    src/penguindata.cpp \
     src/penguinsettings.cpp
 
 HEADERS += \

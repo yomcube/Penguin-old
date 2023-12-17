@@ -43,7 +43,7 @@
      <enum>QTabWidget::Rounded</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="header">
      <attribute name="title">
@@ -274,7 +274,7 @@
        <string>Editing save file:</string>
       </property>
      </widget>
-     <widget class="QComboBox" name="comboBox">
+     <widget class="QComboBox" name="saveSlots_currentSlot">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -314,7 +314,7 @@
        </property>
       </item>
      </widget>
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QGroupBox" name="currentWorldInformation">
       <property name="geometry">
        <rect>
         <x>210</x>
@@ -966,7 +966,7 @@ counter</string>
        </property>
       </widget>
      </widget>
-     <widget class="QGroupBox" name="groupBox_2">
+     <widget class="QGroupBox" name="statistics">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -978,7 +978,7 @@ counter</string>
       <property name="title">
        <string>Statistics</string>
       </property>
-      <widget class="QSpinBox" name="spinBox">
+      <widget class="QSpinBox" name="levelScore">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -991,7 +991,7 @@ counter</string>
         <number>99999950</number>
        </property>
       </widget>
-      <widget class="QSpinBox" name="spinBox_4">
+      <widget class="QSpinBox" name="creditsScore">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -1001,7 +1001,7 @@ counter</string>
         </rect>
        </property>
        <property name="maximum">
-        <number>99999950</number>
+        <number>65535</number>
        </property>
       </widget>
       <widget class="QLabel" name="label_10">
@@ -1022,12 +1022,12 @@ counter</string>
         <rect>
          <x>10</x>
          <y>70</y>
-         <width>81</width>
+         <width>111</width>
          <height>16</height>
         </rect>
        </property>
        <property name="text">
-        <string>Credits score</string>
+        <string>Staff credits score</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_5">
@@ -1043,7 +1043,7 @@ counter</string>
         <string>Game completion flags</string>
        </property>
       </widget>
-      <widget class="QListWidget" name="listWidget">
+      <widget class="QListWidget" name="saveSlots_gameCompletionFlags">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -1134,7 +1134,7 @@ counter</string>
        </item>
       </widget>
      </widget>
-     <widget class="QGroupBox" name="groupBox_3">
+     <widget class="QGroupBox" name="playerInformation">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -1423,7 +1423,7 @@ counter</string>
        </widget>
       </widget>
      </widget>
-     <widget class="QGroupBox" name="groupBox_4">
+     <widget class="QGroupBox" name="misc">
       <property name="geometry">
        <rect>
         <x>370</x>

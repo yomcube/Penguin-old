@@ -43,3 +43,11 @@ void PenguinData::setFlag(u16& input, bool status, u8 bit) {
         input &= ~(1 << bit);
     }
 }
+
+void PenguinData::setFlag(u8& input, bool status, u8 bit) {
+    if (status) {
+        input |= (1 << bit);
+    } else {
+        input &= ~(1 << bit);
+    }
+}

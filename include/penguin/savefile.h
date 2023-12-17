@@ -16,7 +16,8 @@ struct SaveData {
             W - Taiwanese
         */
 
-        u8 version[2];						// version and subversion; always 0xE and 0x0.
+        //u8 version[2];						// version and subversion; always 0xE and 0x0.
+        u16 version;
         u8 lastSelectedFile;				// 0 to 2.
         u8 _7;								// unused. speculated to be padding.
         u16 freeModePlayCount[WORLD_COUNT][STAGE_COUNT];
@@ -29,7 +30,8 @@ struct SaveData {
     static_assert(sizeof(SaveData::Header) == 0x6A0, "Header size mismatch!"); // wrong size
 
     struct SaveSlot {
-        u8 version[2];									// version and subversion; always 0xE and 0x0.
+        //u8 version[2];									// version and subversion; always 0xE and 0x0.
+        u16 version;
         u8 gameCompletion;
         u8 currentWorld;
         u8 currentSubworld;
@@ -67,8 +69,9 @@ struct SaveData {
 
 
     Header header;
-    SaveSlot saveSlots[3];
-    SaveSlot quickSaves[3];
+    //SaveSlot normalSaveSlots[3];
+    //SaveSlot quickSaves[3];
+    SaveSlot saveSlots[6]; // 3 normal, 3 quick, in that order.
 };
 
 static_assert(sizeof(SaveData) == 0x3FA0, "Save Data size mismatch!");

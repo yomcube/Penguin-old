@@ -6,5 +6,6 @@ Debug
 Release
 
 # Penguin
-*.sav
+*.sav*
 *.bin
+*.dat

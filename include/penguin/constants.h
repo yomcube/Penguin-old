@@ -2,6 +2,8 @@
 
 #define	AMBUSH_ENEMY_COUNT  4
 #define	HINT_MOVIE_COUNT	70
+// in reality there are 64 hint movies, not 70.
+// 70 is just the constant
 
 enum STAGE_ENUM {
     STAGE_1,
