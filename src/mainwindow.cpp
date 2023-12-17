@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include "penguinsettings.h"
 #include <QMessageBox>
-
+#include <fstream>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -179,6 +179,7 @@ bool MainWindow::openFile() {
     }
 
     penguinData.currentState = State_OpeningFile;
+
     QDataStream inStream(&file);
     inStream.setByteOrder(QDataStream::BigEndian);
 
@@ -274,6 +275,11 @@ bool MainWindow::openFile() {
 }
 
 bool MainWindow::saveFile(bool saveAs) {
+
+    if (!penguinData.fileOpen) {
+        displayInfo("No file is open!", DIT_Error);
+        return false;
+    }
     QString filename;
     if (saveAs) {
         filename = QFileDialog::getSaveFileName(this, "Save an NSMBW save file.", QString(), "NSMBW save file (*.sav)");
@@ -365,6 +371,8 @@ bool MainWindow::saveFile(bool saveAs) {
             }
             outStream << slot.deathCountW3Level4Switch;
             populateArrayOut(outStream, slot.padding, 0x13);
+
+            slot.crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.saveSlots[i].version), sizeof(SaveData::SaveSlot) - 0x4);
             outStream << slot.crc32;
 
             savedata.saveSlots[i] = slot;
@@ -372,6 +380,26 @@ bool MainWindow::saveFile(bool saveAs) {
         penguinData.savedata = savedata;
     }
     file.close();
+
+    // file has been written, opening it *again* with std::fstream
+    // so i can actually calculate the hashes. thanks qt
+
+    {
+        std::fstream temp(filename.toStdString(), std::ios::in | std::ios::binary);
+        SaveData savedata;
+        temp.read((char*)&savedata, sizeof(savedata));
+        savedata.header.crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.header.magic[0]) + 0x4, 0x698);
+        for (int i = 0; i < 6; i++)
+            savedata.saveSlots[i].crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.saveSlots[i].version), sizeof(SaveData::SaveSlot) - 0x4);
+        penguinData.savedata = savedata;
+        temp.close();
+        // write the save file *again*.
+        temp.open(filename.toStdString(), std::ios::out | std::ios::binary);
+        temp.write((char*)&savedata, sizeof(savedata));
+        temp.close();
+    }
+
+
     displayInfo("Successfully saved file.", DIT_Information);
     penguinData.fileSaved = true;
     return true;
