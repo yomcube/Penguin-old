@@ -9,9 +9,9 @@ PenguinSettings::PenguinSettings(QWidget* parent, PenguinData* newPenguinData)
 {
     settingsUi->setupUi(this);
 
-    QObject::connect(settingsUi->askToClose, &QCheckBox::stateChanged, this, &PenguinSettings::updateSettings);
-    QObject::connect(settingsUi->logLocation, &QComboBox::currentIndexChanged, this, &PenguinSettings::updateSettings);
-    QObject::connect(settingsUi->maintainPosition, &QCheckBox::stateChanged, this, &PenguinSettings::updateSettings);
+    QObject::connect(settingsUi->askToClose, &QCheckBox::stateChanged, this, &PenguinSettings::askToClose);
+    QObject::connect(settingsUi->logLocation, &QComboBox::currentIndexChanged, this, &PenguinSettings::logSite);
+    QObject::connect(settingsUi->maintainPosition, &QCheckBox::stateChanged, this, &PenguinSettings::maintainPosition);
 }
 
 
@@ -19,14 +19,21 @@ PenguinSettings::~PenguinSettings() {
     delete settingsUi;
 }
 
-void PenguinSettings::updateSettings() { 
+void PenguinSettings::askToClose() {
     penguinData->settings.askToClose = settingsUi->askToClose->isChecked();
+}
+
+void PenguinSettings::logSite() {
     penguinData->settings.logSite = (LogSite)settingsUi->logLocation->currentIndex();
+}
+
+void PenguinSettings::maintainPosition() {
     penguinData->settings.maintainPosition = settingsUi->maintainPosition->isChecked();
 }
 
 void PenguinSettings::updateFields() {
-    settingsUi->askToClose->setChecked(penguinData->settings.askToClose);
+    if (penguinData->settings.askToClose)
+        settingsUi->askToClose->setCheckState(Qt::CheckState::Checked);
     settingsUi->logLocation->setCurrentIndex((int)penguinData->settings.logSite);
     if (penguinData->settings.maintainPosition)
         settingsUi->maintainPosition->setCheckState(Qt::CheckState::Checked);

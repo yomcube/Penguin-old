@@ -40,7 +40,7 @@ public:
     bool fileSaved;
     EditorState currentState;
     u8 currentSlot; // the save slot currently being edited. 0-2 normal, 3-5 quick
-
+    u8 currentPlayer;
     // this function is a slightly modified version of the crc_32 function from libcrc.
     // https://github.com/lammertb/libcrc/blob/master/src/crc32.c
     static u32 calculateChecksum(const char* data, unsigned int num_bytes);

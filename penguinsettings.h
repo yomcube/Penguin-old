@@ -15,7 +15,9 @@ public:
 
     void updateFields();
 public slots:
-    void updateSettings();
+    void askToClose();
+    void logSite();
+    void maintainPosition();
 public:
     PenguinData* penguinData;
 private:

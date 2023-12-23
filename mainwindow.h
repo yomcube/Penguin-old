@@ -25,6 +25,7 @@ public:
     void displayInfo(QString str, int type = DisplayInfoType::DIT_Information);
     // loads fields based on opened save file
     void loadFields();
+    void loadPlayerFields();
 
     PenguinData penguinData;
 public slots:
@@ -46,10 +47,16 @@ public slots:
 
     /* save slots */
     void saveSlots_setCurrentSlot();
+    void saveSlots_setCurrentPlayer();
 
     void saveSlots_setLevelScore();
     void saveSlots_setStaffCreditsScore();
     void saveSlots_setGameCompletion();
+    void saveSlots_setCurrentWorld();
+    void saveSlots_setCurrentSubworld();
+    void saveSlots_setCurrentPathNode();
+    void saveSlots_setW3SwitchOn();
+    void saveSlots_setW5VineReshuffleCounter();
 private:
     Ui::MainWindow* ui;
     PenguinSettings* settingsWindow;

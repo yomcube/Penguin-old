@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     {
         QFile file("penguin_settings.bin");
         if (file.exists()) {
+
             file.open(QIODevice::ReadOnly);
             file.read(reinterpret_cast<char*>(&penguinData.settings), sizeof(PenguinData::settings));
             file.close();
@@ -44,23 +45,29 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->header_unlockedWorlds, &QListWidget::itemChanged, this, &MainWindow::header_setUnlockedWorlds);
 
     /* save slots */
-    // saveSlots_currentSlot should not be edited in loadFields() because it's editor-only
     QObject::connect(ui->saveSlots_currentSlot, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setCurrentSlot);
+    QObject::connect(ui->saveSlots_currentPlayer, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setCurrentPlayer);
+
     QObject::connect(ui->levelScore, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setLevelScore);
     QObject::connect(ui->creditsScore, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setStaffCreditsScore);
     QObject::connect(ui->saveSlots_gameCompletionFlags, &QListWidget::itemChanged, this, &MainWindow::saveSlots_setGameCompletion);
+    QObject::connect(ui->saveSlots_currentWorld, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setCurrentWorld);
+    QObject::connect(ui->saveSlots_currentSubworld, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setCurrentSubworld);
+    QObject::connect(ui->saveSlots_currentPathNode, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setCurrentPathNode);
+    QObject::connect(ui->saveSlots_w3SwitchOn, &QCheckBox::stateChanged, this, &MainWindow::saveSlots_setW3SwitchOn);
+    QObject::connect(ui->saveSlots_w5VineReshuffleCounter, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setW5VineReshuffleCounter);
+
+
 }
 
 MainWindow::~MainWindow() {
     delete ui;
 
-    QFile file("penguin_settings.bin");
-    if (file.exists()) {
-        Vec2i pos;
-        pos.x = this->x();
-        pos.y = this->y();
-        penguinData.settings.pos = pos;
-        file.open(QIODevice::WriteOnly);
+
+    std::fstream file("penguin_settings.bin", std::ios::out | std::ios::binary);
+    if (file.is_open()) {
+        penguinData.settings.pos.x = this->x();
+        penguinData.settings.pos.y = this->y();
         file.write(reinterpret_cast<char*>(&penguinData.settings), sizeof(PenguinData::settings));
         file.close();
     }
@@ -73,7 +80,6 @@ void MainWindow::openSettings() {
     // read settings
     QFile file("penguin_settings.bin");
     if (file.exists()) {
-        //displayInfo("something");
         file.open(QIODevice::ReadOnly);
         file.read(reinterpret_cast<char*>(&penguinData.settings), sizeof(PenguinData::settings));
         file.close();
@@ -81,10 +87,11 @@ void MainWindow::openSettings() {
 
     settingsWindow->updateFields();
     settingsWindow->exec();
-
+    settingsWindow->updateFields();
     // save settings after closing the settings window
     file.open(QIODevice::WriteOnly);
     file.write(reinterpret_cast<char*>(&penguinData.settings), sizeof(PenguinData::settings));
+    //displayInfo(QString::number(penguinData.settings.maintainPosition));
     file.close();
 }
 
@@ -145,6 +152,31 @@ void MainWindow::loadFields() {
         else
             ui->saveSlots_gameCompletionFlags->item(i)->setCheckState(Qt::CheckState::Unchecked);
     }
+
+    ui->saveSlots_currentWorld->setCurrentIndex(penguinData.savedata.saveSlots[penguinData.currentSlot].currentWorld);
+    ui->saveSlots_currentSubworld->setValue(penguinData.savedata.saveSlots[penguinData.currentSlot].currentSubworld);
+    ui->saveSlots_currentPathNode->setValue(penguinData.savedata.saveSlots[penguinData.currentSlot].currentPathNode);
+    ui->saveSlots_w3SwitchOn->setChecked(penguinData.savedata.saveSlots[penguinData.currentSlot].w3SwitchOn);
+    ui->saveSlots_w5VineReshuffleCounter->setValue(penguinData.savedata.saveSlots[penguinData.currentSlot].w5VineReshuffleCounter);
+
+    loadPlayerFields();
+}
+
+void MainWindow::loadPlayerFields() {
+    ui->saveSlots_playerContinues->setValue(penguinData.savedata.saveSlots[penguinData.currentSlot].playerContinues[penguinData.currentPlayer]);
+    ui->saveSlots_playerCoins->setValue(penguinData.savedata.saveSlots[penguinData.currentSlot].playerCoins[penguinData.currentPlayer]);
+    ui->saveSlots_playerLives->setValue(penguinData.savedata.saveSlots[penguinData.currentSlot].playerLives[penguinData.currentPlayer]);
+
+    for (int i = 0; i < ui->saveSlots_playerSpawnFlags->count(); i++) {
+        u8 flags = penguinData.savedata.saveSlots[penguinData.currentSlot].playerSpawnFlag[penguinData.currentPlayer];
+        if ((flags & (1 << i)))
+            ui->saveSlots_playerSpawnFlags->item(i)->setCheckState(Qt::CheckState::Checked);
+        else
+            ui->saveSlots_playerSpawnFlags->item(i)->setCheckState(Qt::CheckState::Unchecked);
+    }
+
+    ui->saveSlots_playerCharacter->setCurrentIndex(penguinData.savedata.saveSlots[penguinData.currentSlot].playerCharacter[penguinData.currentPlayer]);
+    ui->saveSlots_playerPowerup->setCurrentIndex(penguinData.savedata.saveSlots[penguinData.currentSlot].playerPowerup[penguinData.currentPlayer]);
 }
 /* file i/o */
 
@@ -172,7 +204,7 @@ bool MainWindow::openFile() {
         return false;
     }
     QFile file(filename);
-    if (!file.open(QIODevice::ReadWrite)) {
+    if (!file.open(QIODevice::ReadOnly)) {
         displayInfo("Couldn't open file.", DIT_Error);
         penguinData.currentState = State_Normal;
         return false;
@@ -293,7 +325,7 @@ bool MainWindow::saveFile(bool saveAs) {
     }
 
     QFile file(filename);
-    if (!file.open(QIODevice::ReadWrite)) {
+    if (!file.open(QIODevice::WriteOnly)) {
         displayInfo("Couldn't save file.", DIT_Error);
         return false;
     }
@@ -370,10 +402,9 @@ bool MainWindow::saveFile(bool saveAs) {
                 populateArrayOut(outStream, slot.deathCount[j], STAGE_COUNT);
             }
             outStream << slot.deathCountW3Level4Switch;
-            populateArrayOut(outStream, slot.padding, 0x13);
-
-            slot.crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.saveSlots[i].version), sizeof(SaveData::SaveSlot) - 0x4);
-            outStream << slot.crc32;
+            populateArrayOut(outStream, slot.padding, 0x13 + 0x4); // i guess this doesn't work anymore even though i changed nothing?
+            //slot.crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.saveSlots[i].version), sizeof(SaveData::SaveSlot) - 0x4);
+            //outStream << slot.crc32;
 
             savedata.saveSlots[i] = slot;
         }
@@ -381,11 +412,12 @@ bool MainWindow::saveFile(bool saveAs) {
     }
     file.close();
 
-    // file has been written, opening it *again* with std::fstream
-    // so i can actually calculate the hashes. thanks qt
-
     {
         std::fstream temp(filename.toStdString(), std::ios::in | std::ios::binary);
+        if (!temp.is_open()) {
+            displayInfo("further error saving. 1");
+            return false;
+        }
         SaveData savedata;
         temp.read((char*)&savedata, sizeof(savedata));
         savedata.header.crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.header.magic[0]) + 0x4, 0x698);
@@ -393,8 +425,12 @@ bool MainWindow::saveFile(bool saveAs) {
             savedata.saveSlots[i].crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.saveSlots[i].version), sizeof(SaveData::SaveSlot) - 0x4);
         penguinData.savedata = savedata;
         temp.close();
-        // write the save file *again*.
+
         temp.open(filename.toStdString(), std::ios::out | std::ios::binary);
+        if (!temp.is_open()) {
+            displayInfo("further error saving. 2");
+            return false;
+        }
         temp.write((char*)&savedata, sizeof(savedata));
         temp.close();
     }

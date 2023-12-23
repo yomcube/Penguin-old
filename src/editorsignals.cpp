@@ -35,6 +35,11 @@ void MainWindow::saveSlots_setCurrentSlot() {
     loadFields();
 }
 
+void MainWindow::saveSlots_setCurrentPlayer() {
+    penguinData.currentPlayer = ui->saveSlots_currentPlayer->currentIndex();
+    loadPlayerFields();
+}
+
 void MainWindow::saveSlots_setLevelScore() {
     penguinData.savedata.saveSlots[penguinData.currentSlot].score = ui->levelScore->value();
 }
@@ -54,4 +59,24 @@ void MainWindow::saveSlots_setGameCompletion() {
         PenguinData::setFlag(flags, checked, i);
     }
 
+}
+
+void MainWindow::saveSlots_setCurrentWorld() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].currentWorld = ui->saveSlots_currentWorld->currentIndex();
+}
+
+void MainWindow::saveSlots_setCurrentSubworld() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].currentSubworld = ui->saveSlots_currentSubworld->value();
+}
+
+void MainWindow::saveSlots_setCurrentPathNode() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].currentPathNode = ui->saveSlots_currentPathNode->value();
+}
+
+void MainWindow::saveSlots_setW3SwitchOn() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].w3SwitchOn = ui->saveSlots_w3SwitchOn->isChecked();
+}
+
+void MainWindow::saveSlots_setW5VineReshuffleCounter() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].w5VineReshuffleCounter = ui->saveSlots_w5VineReshuffleCounter->value();
 }

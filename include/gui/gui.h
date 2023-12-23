@@ -5,3 +5,6 @@
 #include <QFileDialog>
 #include <QStringList>
 #include <QDataStream>
+#include <QSpinBox>
+#include <QComboBox>
+#include <QListWidget>
