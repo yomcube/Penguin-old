@@ -58,7 +58,7 @@ void MainWindow::saveSlots_setGameCompletion() {
         bool checked = ui->saveSlots_gameCompletionFlags->item(i)->checkState() == Qt::CheckState::Checked;
         PenguinData::setFlag(flags, checked, i);
     }
-
+    penguinData.savedata.saveSlots[penguinData.currentSlot].gameCompletion = flags;
 }
 
 void MainWindow::saveSlots_setCurrentWorld() {
@@ -79,4 +79,54 @@ void MainWindow::saveSlots_setW3SwitchOn() {
 
 void MainWindow::saveSlots_setW5VineReshuffleCounter() {
     penguinData.savedata.saveSlots[penguinData.currentSlot].w5VineReshuffleCounter = ui->saveSlots_w5VineReshuffleCounter->value();
+}
+
+void MainWindow::saveSlots_setUnlockedWorlds() {
+    if (penguinData.currentState == State_OpeningFile)
+        return;
+
+    for (int i = 0; i < ui->saveSlots_unlockedWorlds->count(); i++) {
+        bool checked = ui->saveSlots_unlockedWorlds->item(i)->checkState() == Qt::CheckState::Checked;
+        penguinData.savedata.saveSlots[penguinData.currentSlot].worldCompletion[i] = checked;
+    }
+}
+
+
+
+void MainWindow::saveSlots_setHintMovieCompletion() {
+    if (penguinData.currentState == State_OpeningFile)
+        return;
+    
+    for (int i = 0; i < ui->saveSlots_hintMovieCompletion->count(); i++) {
+        bool checked = ui->saveSlots_hintMovieCompletion->item(i)->checkState() == Qt::CheckState::Checked;
+        penguinData.savedata.saveSlots[penguinData.currentSlot].hintMovieBought[i] = checked;
+    }
+}
+/* save slots -> player info */
+
+void MainWindow::saveSlots_setPlayerContinues() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].playerContinues[penguinData.currentPlayer] = ui->saveSlots_playerContinues->value();
+}
+void MainWindow::saveSlots_setPlayerCoins() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].playerCoins[penguinData.currentPlayer] = ui->saveSlots_playerCoins->value();
+}
+void MainWindow::saveSlots_setPlayerLives() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].playerLives[penguinData.currentPlayer] = ui->saveSlots_playerLives->value();
+}
+void MainWindow::saveSlots_setPlayerSpawnFlags() {
+    if (penguinData.currentState == State_OpeningFile)
+        return;
+    u8 flags = penguinData.savedata.saveSlots[penguinData.currentSlot].playerSpawnFlags[penguinData.currentPlayer];
+    for (int i = 0; i < ui->saveSlots_playerSpawnFlags->count(); i++) {
+        bool checked = ui->saveSlots_playerSpawnFlags->item(i)->checkState() == Qt::CheckState::Checked;
+        PenguinData::setFlag(flags, checked, i);
+    }
+
+    penguinData.savedata.saveSlots[penguinData.currentSlot].playerSpawnFlags[penguinData.currentPlayer] = flags;
+}
+void MainWindow::saveSlots_setPlayerCharacter() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].playerCharacter[penguinData.currentPlayer] = ui->saveSlots_playerCharacter->currentIndex();
+}
+void MainWindow::saveSlots_setPlayerPowerup() {
+    penguinData.savedata.saveSlots[penguinData.currentSlot].playerPowerup[penguinData.currentPlayer] = ui->saveSlots_playerPowerup->currentIndex();
 }

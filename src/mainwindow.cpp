@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent)
     /* save slots */
     QObject::connect(ui->saveSlots_currentSlot, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setCurrentSlot);
     QObject::connect(ui->saveSlots_currentPlayer, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setCurrentPlayer);
-
+    
     QObject::connect(ui->levelScore, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setLevelScore);
     QObject::connect(ui->creditsScore, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setStaffCreditsScore);
     QObject::connect(ui->saveSlots_gameCompletionFlags, &QListWidget::itemChanged, this, &MainWindow::saveSlots_setGameCompletion);
@@ -56,8 +56,25 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->saveSlots_currentPathNode, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setCurrentPathNode);
     QObject::connect(ui->saveSlots_w3SwitchOn, &QCheckBox::stateChanged, this, &MainWindow::saveSlots_setW3SwitchOn);
     QObject::connect(ui->saveSlots_w5VineReshuffleCounter, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setW5VineReshuffleCounter);
+    QObject::connect(ui->saveSlots_unlockedWorlds, &QListWidget::itemChanged, this, &MainWindow::saveSlots_setUnlockedWorlds);
 
+    /* save slots -> hint movie completion */
+    for (int i = 0; i < HINT_MOVIE_COUNT - 6; i++) {
+        QListWidgetItem* item = new QListWidgetItem(QString::fromStdString(hintMovieTitles[i]));
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Unchecked);
+        ui->saveSlots_hintMovieCompletion->addItem(item);
+    }
+    QObject::connect(ui->saveSlots_hintMovieCompletion, &QListWidget::itemChanged, this, &MainWindow::saveSlots_setHintMovieCompletion);
+    /* save slots -> player info */
+    QObject::connect(ui->saveSlots_playerContinues, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setPlayerContinues);
+    QObject::connect(ui->saveSlots_playerCoins, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setPlayerCoins);
+    QObject::connect(ui->saveSlots_playerLives, &QSpinBox::valueChanged, this, &MainWindow::saveSlots_setPlayerLives);
+    QObject::connect(ui->saveSlots_playerSpawnFlags, &QListWidget::itemChanged, this, &MainWindow::saveSlots_setPlayerSpawnFlags);
+    QObject::connect(ui->saveSlots_playerCharacter, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setPlayerCharacter);
+    QObject::connect(ui->saveSlots_playerPowerup, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setPlayerPowerup);
 
+    
 }
 
 MainWindow::~MainWindow() {
@@ -159,6 +176,25 @@ void MainWindow::loadFields() {
     ui->saveSlots_w3SwitchOn->setChecked(penguinData.savedata.saveSlots[penguinData.currentSlot].w3SwitchOn);
     ui->saveSlots_w5VineReshuffleCounter->setValue(penguinData.savedata.saveSlots[penguinData.currentSlot].w5VineReshuffleCounter);
 
+    for (int i = 0; i < ui->saveSlots_unlockedWorlds->count(); i++) {
+        bool checked = penguinData.savedata.saveSlots[penguinData.currentSlot].worldCompletion[i];
+        //displayInfo(QString::fromStdString(std::to_string(penguinData.savedata.saveSlots[penguinData.currentSlot].worldCompletion[i])));
+        if (checked)
+            ui->saveSlots_unlockedWorlds->item(i)->setCheckState(Qt::CheckState::Checked);
+        else
+            ui->saveSlots_unlockedWorlds->item(i)->setCheckState(Qt::CheckState::Unchecked);
+    }
+
+    for (int i = 0; i < ui->saveSlots_hintMovieCompletion->count(); i++) {
+        bool checked = penguinData.savedata.saveSlots[penguinData.currentSlot].hintMovieBought;
+        if (checked)
+            ui->saveSlots_hintMovieCompletion->item(i)->setCheckState(Qt::CheckState::Checked);
+        else
+            ui->saveSlots_hintMovieCompletion->item(i)->setCheckState(Qt::CheckState::Unchecked);
+    }
+
+
+
     loadPlayerFields();
 }
 
@@ -168,7 +204,7 @@ void MainWindow::loadPlayerFields() {
     ui->saveSlots_playerLives->setValue(penguinData.savedata.saveSlots[penguinData.currentSlot].playerLives[penguinData.currentPlayer]);
 
     for (int i = 0; i < ui->saveSlots_playerSpawnFlags->count(); i++) {
-        u8 flags = penguinData.savedata.saveSlots[penguinData.currentSlot].playerSpawnFlag[penguinData.currentPlayer];
+        u8 flags = penguinData.savedata.saveSlots[penguinData.currentSlot].playerSpawnFlags[penguinData.currentPlayer];
         if ((flags & (1 << i)))
             ui->saveSlots_playerSpawnFlags->item(i)->setCheckState(Qt::CheckState::Checked);
         else
@@ -195,109 +231,70 @@ void populateArrayOut(QDataStream& outStream, T* in, int count) {
 }
 
 bool MainWindow::openFile() {
-
-    QString filename = QFileDialog::getOpenFileName(this, "Open an NSMBW save file.", QString(), "NSMBW save file (*.sav)");
-    if (filename.isEmpty()) {
-        // they probably cancelled
+    std::string filename = QFileDialog::getOpenFileName(this, "Open a New Super Mario Bros. Wii save file.", QString(), "New Super Mario Bros. Wii save file (*.sav)").toStdString();
+    if (filename.empty()) {
+        // probably cancelled
         displayInfo("File name is empty, or a file was not opened.", DIT_Error);
         penguinData.currentState = State_Normal;
         return false;
     }
-    QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly)) {
+
+    std::fstream file(filename, std::ios::in | std::ios::binary);
+    if (!file.is_open()) {
+        file.close();
         displayInfo("Couldn't open file.", DIT_Error);
         penguinData.currentState = State_Normal;
         return false;
     }
 
     penguinData.currentState = State_OpeningFile;
+    SaveData savedata = penguinData.savedata;
 
-    QDataStream inStream(&file);
-    inStream.setByteOrder(QDataStream::BigEndian);
+    file.read((char*)&savedata, sizeof(SaveData));
 
-    // if i figure out how to read in big endian all at once,
-    // i'll make this cleaner
-    {
-        SaveData savedata = penguinData.savedata;
-        inStream >> savedata.header.magic[0];
-        inStream >> savedata.header.magic[1];
-        inStream >> savedata.header.magic[2];
-        inStream >> savedata.header.magic[3];
+    // swap the endianness of stuff becuase you're probably using an LE processor
 
-        inStream >> savedata.header.version;
-        inStream >> savedata.header.lastSelectedFile;
-        inStream >> savedata.header._7;
-        for (int w = 0; w < WORLD_COUNT; w++) {
-            for (int s = 0; s < STAGE_COUNT; s++) {
-                inStream >> savedata.header.freeModePlayCount[w][s];
-            }
+    /* header */
+    savedata.header.version = PenguinData::swapEndianness16(savedata.header.version);
+
+    for (int w = 0; w < WORLD_COUNT; w++) {
+        for (int s = 0; s < STAGE_COUNT; s++) {
+            savedata.header.freeModePlayCount[w][s] = PenguinData::swapEndianness16(savedata.header.freeModePlayCount[w][s]);
+            savedata.header.coinBattlePlayCount[w][s] = PenguinData::swapEndianness16(savedata.header.coinBattlePlayCount[w][s]);
         }
-
-        for (int w = 0; w < WORLD_COUNT; w++) {
-            for (int s = 0; s < STAGE_COUNT; s++) {
-                inStream >> savedata.header.coinBattlePlayCount[w][s];
-            }
-        }
-
-        inStream >> savedata.header.extraModesUnlockedWorlds;
-        inStream >> savedata.header._69A;
-        inStream >> savedata.header.crc32;
-
-        for (int i = 0; i < 6; i++) {
-            SaveData::SaveSlot slot;
-
-            inStream >> slot.version;
-            inStream >> slot.gameCompletion;
-            inStream >> slot.currentWorld;
-            inStream >> slot.currentSubworld;
-            inStream >> slot.currentPathNode;
-            inStream >> slot.w5VineReshuffleCounter;
-            inStream >> slot.w3SwitchOn;
-            inStream >> slot._8;
-            populateArrayIn(inStream, slot.stockItemCount, POWERUP_COUNT);
-            populateArrayIn(inStream, slot.startingMushroomHouseType, WORLD_COUNT);
-            populateArrayIn(inStream, slot.playerContinues, PLAYER_COUNT);
-            populateArrayIn(inStream, slot.playerCoins, PLAYER_COUNT);
-            populateArrayIn(inStream, slot.playerLives, PLAYER_COUNT);
-            populateArrayIn(inStream, slot.playerSpawnFlag, PLAYER_COUNT);
-            populateArrayIn(inStream, slot.playerCharacter, PLAYER_COUNT);
-            populateArrayIn(inStream, slot.playerPowerup, PLAYER_COUNT);
-            populateArrayIn(inStream, slot.worldCompletion, WORLD_COUNT);
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayIn(inStream, slot.enemyRevivalCount[j], AMBUSH_ENEMY_COUNT);
-            }
-            inStream >> slot._64;
-            inStream >> slot.staffCreditsHighScore;
-            inStream >> slot.score;
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayIn(inStream, slot.stageCompletion[j], STAGE_COUNT);
-            }
-            populateArrayIn(inStream, slot.hintMovieBought, HINT_MOVIE_COUNT - 6);
-            populateArrayIn(inStream, slot.toadRescueLevel, WORLD_COUNT);
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayIn(inStream, slot.enemySubworldNumber[j], AMBUSH_ENEMY_COUNT);
-            }
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayIn(inStream, slot.enemyPosIndex[j], AMBUSH_ENEMY_COUNT);
-            }
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayIn(inStream, slot.enemyWalkDirection[j], AMBUSH_ENEMY_COUNT);
-            }
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayIn(inStream, slot.deathCount[j], STAGE_COUNT);
-            }
-            inStream >> slot.deathCountW3Level4Switch;
-            populateArrayIn(inStream, slot.padding, 0x13);
-            inStream >> slot.crc32;
-
-            savedata.saveSlots[i] = slot;
-        }
-        penguinData.savedata = savedata;
-
     }
+
+    savedata.header.extraModesUnlockedWorlds = PenguinData::swapEndianness16(savedata.header.extraModesUnlockedWorlds);
+    savedata.header.crc32 = PenguinData::swapEndianness32(savedata.header.crc32);
+
+    /* save slots */
+    for (int i = 0; i < 6; ++i) {
+        SaveData::SaveSlot slot = savedata.saveSlots[i];
+
+        slot.version = PenguinData::swapEndianness16(slot.version);
+        slot.staffCreditsHighScore = PenguinData::swapEndianness16(slot.staffCreditsHighScore);
+        slot.score = PenguinData::swapEndianness32(slot.score);
+        slot.crc32 = PenguinData::swapEndianness32(slot.crc32);
+
+        for (int w = 0; w < WORLD_COUNT; ++w) {
+            for (int s = 0; s < STAGE_COUNT; ++s) {
+                slot.stageCompletion[w][s] = PenguinData::swapEndianness32(slot.stageCompletion[w][s]);
+            }
+
+            for (int e = 0; e < AMBUSH_ENEMY_COUNT; ++e) {
+                slot.enemyRevivalCount[w][e] = PenguinData::swapEndianness16(slot.enemyRevivalCount[w][e]);
+            }
+        }
+
+        savedata.saveSlots[i] = slot;
+    }
+
+
+    penguinData.savedata = savedata;
+
     file.close();
     displayInfo("Successfully opened file.", DIT_Information);
-    currentFilename = filename;
+    currentFilename = QString::fromStdString(filename);
 
     loadFields();
     penguinData.fileOpen = true;
@@ -306,136 +303,78 @@ bool MainWindow::openFile() {
     return true;
 }
 
-bool MainWindow::saveFile(bool saveAs) {
 
+bool MainWindow::saveFile(bool saveAs) {
     if (!penguinData.fileOpen) {
         displayInfo("No file is open!", DIT_Error);
         return false;
     }
-    QString filename;
+
+    std::string filename;
     if (saveAs) {
-        filename = QFileDialog::getSaveFileName(this, "Save an NSMBW save file.", QString(), "NSMBW save file (*.sav)");
+        filename = QFileDialog::getSaveFileName(this, "Save a New Super Mario Bros. Wii save file", QString(), "New Super Mario Bros. Wii save file (*.sav)").toStdString();
     } else {
-        filename = currentFilename;
-    }
-    if (filename.isEmpty()) {
-        // they probably cancelled
-        displayInfo("File name is empty, or the file was not saved.", DIT_Error);
-        return false;
+        filename = currentFilename.toStdString();
     }
 
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly)) {
+    std::fstream file(filename, std::ios::out | std::ios::binary);
+
+    if (!file.is_open()) {
+        file.close();
         displayInfo("Couldn't save file.", DIT_Error);
-        return false;
+        return false;  
+    }
+    SaveData savedata = penguinData.savedata;
+
+    // swap endianness again
+    savedata.header.version = PenguinData::swapEndianness16(savedata.header.version);
+
+    for (int w = 0; w < WORLD_COUNT; w++) {
+        for (int s = 0; s < STAGE_COUNT; s++) {
+            savedata.header.freeModePlayCount[w][s] = PenguinData::swapEndianness16(savedata.header.freeModePlayCount[w][s]);
+            savedata.header.coinBattlePlayCount[w][s] = PenguinData::swapEndianness16(savedata.header.coinBattlePlayCount[w][s]);
+        }
     }
 
-    QDataStream outStream(&file);
-    outStream.setByteOrder(QDataStream::ByteOrder::BigEndian);
-    {
-        SaveData savedata = penguinData.savedata;
-        outStream << savedata.header.magic[0];
-        outStream << savedata.header.magic[1];
-        outStream << savedata.header.magic[2];
-        outStream << savedata.header.magic[3];
+    savedata.header.extraModesUnlockedWorlds = PenguinData::swapEndianness16(savedata.header.extraModesUnlockedWorlds);
+    savedata.header.crc32 = PenguinData::swapEndianness32(savedata.header.crc32);
 
-        outStream << savedata.header.version;
-        outStream << savedata.header.lastSelectedFile;
-        outStream << savedata.header._7;
-        for (int w = 0; w < WORLD_COUNT; w++) {
-            for (int s = 0; s < STAGE_COUNT; s++) {
-                outStream << savedata.header.freeModePlayCount[w][s];
+    /* save slots */
+    for (int i = 0; i < 6; ++i) {
+        SaveData::SaveSlot slot = savedata.saveSlots[i];
+
+        slot.version = PenguinData::swapEndianness16(slot.version);
+        slot.staffCreditsHighScore = PenguinData::swapEndianness16(slot.staffCreditsHighScore);
+        slot.score = PenguinData::swapEndianness32(slot.score);
+        slot.crc32 = PenguinData::swapEndianness32(slot.crc32);
+
+        for (int w = 0; w < WORLD_COUNT; ++w) {
+            for (int s = 0; s < STAGE_COUNT; ++s) {
+                slot.stageCompletion[w][s] = PenguinData::swapEndianness32(slot.stageCompletion[w][s]);
+            }
+
+            for (int e = 0; e < AMBUSH_ENEMY_COUNT; ++e) {
+                slot.enemyRevivalCount[w][e] = PenguinData::swapEndianness16(slot.enemyRevivalCount[w][e]);
             }
         }
 
-        for (int w = 0; w < WORLD_COUNT; w++) {
-            for (int s = 0; s < STAGE_COUNT; s++) {
-                outStream << savedata.header.coinBattlePlayCount[w][s];
-            }
-        }
-
-        outStream << savedata.header.extraModesUnlockedWorlds;
-        outStream << savedata.header._69A;
-        outStream << savedata.header.crc32;
-
-        for (int i = 0; i < 6; i++) {
-            SaveData::SaveSlot slot = penguinData.savedata.saveSlots[i];
-
-            outStream << slot.version;
-            outStream << slot.gameCompletion;
-            outStream << slot.currentWorld;
-            outStream << slot.currentSubworld;
-            outStream << slot.currentPathNode;
-            outStream << slot.w5VineReshuffleCounter;
-            outStream << slot.w3SwitchOn;
-            outStream << slot._8;
-            populateArrayOut(outStream, slot.stockItemCount, POWERUP_COUNT);
-            populateArrayOut(outStream, slot.startingMushroomHouseType, WORLD_COUNT);
-            populateArrayOut(outStream, slot.playerContinues, PLAYER_COUNT);
-            populateArrayOut(outStream, slot.playerCoins, PLAYER_COUNT);
-            populateArrayOut(outStream, slot.playerLives, PLAYER_COUNT);
-            populateArrayOut(outStream, slot.playerSpawnFlag, PLAYER_COUNT);
-            populateArrayOut(outStream, slot.playerCharacter, PLAYER_COUNT);
-            populateArrayOut(outStream, slot.playerPowerup, PLAYER_COUNT);
-            populateArrayOut(outStream, slot.worldCompletion, WORLD_COUNT);
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayOut(outStream, slot.enemyRevivalCount[j], AMBUSH_ENEMY_COUNT);
-            }
-            outStream << slot._64;
-            outStream << slot.staffCreditsHighScore;
-            outStream << slot.score;
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayOut(outStream, slot.stageCompletion[j], STAGE_COUNT);
-            }
-            populateArrayOut(outStream, slot.hintMovieBought, HINT_MOVIE_COUNT - 6);
-            populateArrayOut(outStream, slot.toadRescueLevel, WORLD_COUNT);
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayOut(outStream, slot.enemySubworldNumber[j], AMBUSH_ENEMY_COUNT);
-            }
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayOut(outStream, slot.enemyPosIndex[j], AMBUSH_ENEMY_COUNT);
-            }
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayOut(outStream, slot.enemyWalkDirection[j], AMBUSH_ENEMY_COUNT);
-            }
-            for (int j = 0; j < WORLD_COUNT; j++) {
-                populateArrayOut(outStream, slot.deathCount[j], STAGE_COUNT);
-            }
-            outStream << slot.deathCountW3Level4Switch;
-            populateArrayOut(outStream, slot.padding, 0x13 + 0x4); // i guess this doesn't work anymore even though i changed nothing?
-            //slot.crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.saveSlots[i].version), sizeof(SaveData::SaveSlot) - 0x4);
-            //outStream << slot.crc32;
-
-            savedata.saveSlots[i] = slot;
-        }
-        penguinData.savedata = savedata;
+        savedata.saveSlots[i] = slot;
     }
+
+    // calculate checksums
+
+    savedata.header.crc32 = PenguinData::calculateChecksum((char*)&savedata.header.version, sizeof(SaveData::Header) - sizeof(savedata.header.magic) - sizeof(savedata.header.crc32));
+    for (int i = 0; i < 6; i++) {
+        SaveData::SaveSlot slot = savedata.saveSlots[i];
+        slot.crc32 = PenguinData::calculateChecksum((char*)&slot.version, sizeof(SaveData::SaveSlot) - sizeof(slot.crc32));
+        savedata.saveSlots[i] = slot;
+    }
+
+    // note to self, do not do penguinData.savedata = savedata
+    // because then the values will be byteswapped *again*
+
+    file.write((char*)&savedata, sizeof(SaveData));
     file.close();
-
-    {
-        std::fstream temp(filename.toStdString(), std::ios::in | std::ios::binary);
-        if (!temp.is_open()) {
-            displayInfo("further error saving. 1");
-            return false;
-        }
-        SaveData savedata;
-        temp.read((char*)&savedata, sizeof(savedata));
-        savedata.header.crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.header.magic[0]) + 0x4, 0x698);
-        for (int i = 0; i < 6; i++)
-            savedata.saveSlots[i].crc32 = PenguinData::calculateChecksum(reinterpret_cast<const char*>(&savedata.saveSlots[i].version), sizeof(SaveData::SaveSlot) - 0x4);
-        penguinData.savedata = savedata;
-        temp.close();
-
-        temp.open(filename.toStdString(), std::ios::out | std::ios::binary);
-        if (!temp.is_open()) {
-            displayInfo("further error saving. 2");
-            return false;
-        }
-        temp.write((char*)&savedata, sizeof(savedata));
-        temp.close();
-    }
-
-
     displayInfo("Successfully saved file.", DIT_Information);
     penguinData.fileSaved = true;
     return true;

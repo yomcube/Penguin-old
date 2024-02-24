@@ -16,8 +16,8 @@ enum class LogSite : u8 {
 };
 
 enum EditorState : u8 {
-    State_Normal, // the program will be in this state most of the time
-    State_OpeningFile, // used *while* the program is in the process of opening a file
+    State_Normal,       // the program will be in this state most of the time
+    State_OpeningFile,  // used *while* the program is in the process of opening a file
 };
 
 struct Vec2i {
@@ -49,6 +49,6 @@ public:
     static u16 swapEndianness16(u16 value);
     static void setFlag(u32& input, bool status, u8 bit);
     static void setFlag(u16& input, bool status, u8 bit);
-    static void setFlag(u8& inpu, bool status, u8 bit);
+    static void setFlag(u8& input, bool status, u8 bit);
 };
 #pragma pack(pop)

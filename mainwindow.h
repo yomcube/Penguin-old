@@ -57,6 +57,16 @@ public slots:
     void saveSlots_setCurrentPathNode();
     void saveSlots_setW3SwitchOn();
     void saveSlots_setW5VineReshuffleCounter();
+    void saveSlots_setUnlockedWorlds();
+
+    void saveSlots_setHintMovieCompletion();
+    /* save slots -> player info*/
+    void saveSlots_setPlayerContinues();
+    void saveSlots_setPlayerCoins();
+    void saveSlots_setPlayerLives();
+    void saveSlots_setPlayerSpawnFlags();
+    void saveSlots_setPlayerCharacter();
+    void saveSlots_setPlayerPowerup();
 private:
     Ui::MainWindow* ui;
     PenguinSettings* settingsWindow;

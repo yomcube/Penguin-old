@@ -1445,7 +1445,7 @@ counter</string>
       <property name="title">
        <string>Misc.</string>
       </property>
-      <widget class="QListWidget" name="listWidget_5">
+      <widget class="QListWidget" name="saveSlots_hintMovieCompletion">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -1457,30 +1457,6 @@ counter</string>
        <property name="alternatingRowColors">
         <bool>true</bool>
        </property>
-       <item>
-        <property name="text">
-         <string>I'm not going to</string>
-        </property>
-        <property name="checkState">
-         <enum>Checked</enum>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>type out every single</string>
-        </property>
-        <property name="checkState">
-         <enum>Checked</enum>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>hint movie title right now</string>
-        </property>
-        <property name="checkState">
-         <enum>Checked</enum>
-        </property>
-       </item>
       </widget>
       <widget class="QLabel" name="label_24">
        <property name="geometry">

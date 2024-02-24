@@ -56,12 +56,12 @@ enum WORLD_ENUM {
 };
 
 enum COURSE_COMPLETION_ENUM {
-    COIN1_COLLECTED = 0x1,
-    COIN2_COLLECTED = 0x2,
-    COIN3_COLLECTED = 0x4,
+    COIN1_COLLECTED         = 0x1,
+    COIN2_COLLECTED         = 0x2,
+    COIN3_COLLECTED         = 0x4,
     COIN_MASK = COIN1_COLLECTED | COIN2_COLLECTED | COIN3_COLLECTED,
-    GOAL_NORMAL = 0x10,
-    GOAL_SECRET = 0x20,
+    GOAL_NORMAL             = 0x10,
+    GOAL_SECRET             = 0x20,
     GOAL_MASK = GOAL_NORMAL | GOAL_SECRET,
     SUPER_GUIDE_GOAL_NORMAL = 0x80,
     SUPER_GUIDE_GOAL_SECRET = 0x100,
@@ -73,13 +73,13 @@ enum WORLD_COMPLETION_ENUM {
 };
 
 enum GAME_COMPLETION_ENUM {
-    SAVE_EMPTY = 0x1,
-    FINAL_BOSS_BEATEN = 0x2,
-    GOAL_ALL = 0x4,
-    COIN_ALL = 0x8,
-    COIN_ALL_SPECIAL = 0x10,
-    GAME_COMPLETED = 0x20,
-    SUPER_GUIDE_TRIGGERED = 0x40
+    SAVE_EMPTY              = 0x1,
+    FINAL_BOSS_BEATEN       = 0x2,
+    GOAL_ALL                = 0x4,
+    COIN_ALL                = 0x8,
+    COIN_ALL_SPECIAL        = 0x10,
+    GAME_COMPLETED          = 0x20,
+    SUPER_GUIDE_TRIGGERED   = 0x40
 };
 
 enum START_KINOKO_KIND_ENUM {
@@ -113,9 +113,9 @@ enum PLAYER_POWERUP_ENUM {
 
 
 enum PLAYER_CREATE_ITEM_ENUM {
-    NO_CREATE_ITEM = 0x0,
-    STAR_POWER = 0x1,
-    RIDING_YOSHI = 0x2,
-    BUBBLED = 0x4,
-    RESCUE_TOAD = 0x8
+    NO_CREATE_ITEM  = 0x0,
+    STAR_POWER      = 0x1,
+    RIDING_YOSHI    = 0x2,
+    BUBBLED         = 0x4,
+    RESCUE_TOAD     = 0x8
 };

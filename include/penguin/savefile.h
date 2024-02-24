@@ -45,7 +45,7 @@ struct SaveData {
         u8 playerContinues[PLAYER_COUNT];
         u8 playerCoins[PLAYER_COUNT];
         u8 playerLives[PLAYER_COUNT];
-        u8 playerSpawnFlag[PLAYER_COUNT];
+        u8 playerSpawnFlags[PLAYER_COUNT];
         u8 playerCharacter[PLAYER_COUNT];
         u8 playerPowerup[PLAYER_COUNT];
         u8 worldCompletion[WORLD_COUNT];
