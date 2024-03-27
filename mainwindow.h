@@ -48,6 +48,7 @@ public slots:
     /* save slots */
     void saveSlots_setCurrentSlot();
     void saveSlots_setCurrentPlayer();
+    void saveSlots_setCurrentEditorWorld();
 
     void saveSlots_setLevelScore();
     void saveSlots_setStaffCreditsScore();
@@ -67,6 +68,8 @@ public slots:
     void saveSlots_setPlayerSpawnFlags();
     void saveSlots_setPlayerCharacter();
     void saveSlots_setPlayerPowerup();
+
+    /* save slots -> world/course specifics */
 private:
     Ui::MainWindow* ui;
     PenguinSettings* settingsWindow;

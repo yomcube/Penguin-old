@@ -13,7 +13,8 @@ SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
     src/penguindata.cpp \
-    src/penguinsettings.cpp
+    src/penguinsettings.cpp \
+    src/worldcourseinfosignals.cpp
 
 HEADERS += \
     include/gui/gui.h \

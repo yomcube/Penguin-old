@@ -74,7 +74,8 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->saveSlots_playerCharacter, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setPlayerCharacter);
     QObject::connect(ui->saveSlots_playerPowerup, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setPlayerPowerup);
 
-    
+    /* save slots -> world/course info */
+//    QObject::connect(ui->saveSlots_worldTabs, &QTabWidget::currentChanged, this, &MainWindow::saveSlots_setCurrentEditorWorld);
 }
 
 MainWindow::~MainWindow() {
