@@ -1,6 +1,7 @@
 #pragma once
 #include "penguin/types.h"
 #include "penguin/constants.h"
+#include <vector>
 // documentation n such goes here
 // big endian
 #pragma pack(push, 1)
@@ -75,6 +76,7 @@ struct SaveData {
 };
 
 static_assert(sizeof(SaveData) == 0x3FA0, "Save Data size mismatch!");
+
 
 static std::string hintMovieTitles[HINT_MOVIE_COUNT - 6] = {
     "1-1: Super Skills",

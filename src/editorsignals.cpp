@@ -91,8 +91,6 @@ void MainWindow::saveSlots_setUnlockedWorlds() {
     }
 }
 
-
-
 void MainWindow::saveSlots_setHintMovieCompletion() {
     if (penguinData.currentState == State_OpeningFile)
         return;

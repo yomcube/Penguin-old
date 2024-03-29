@@ -8,3 +8,5 @@
 #include <QSpinBox>
 #include <QComboBox>
 #include <QListWidget>
+#include <QCloseEvent>
+#include <QStatusBar>

@@ -3,6 +3,8 @@
 #include "penguinsettings.h"
 #include <QMessageBox>
 #include <fstream>
+#include <cstring>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -33,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
     /* penguin */
 
     QObject::connect(ui->actionSettings, &QAction::triggered, this, &MainWindow::openSettings);
-
+    //QObject::connect(this, )
     /* file i/o */
     QObject::connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::openFile);
     QObject::connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveFile);
@@ -75,7 +77,10 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->saveSlots_playerPowerup, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setPlayerPowerup);
 
     /* save slots -> world/course info */
-//    QObject::connect(ui->saveSlots_worldTabs, &QTabWidget::currentChanged, this, &MainWindow::saveSlots_setCurrentEditorWorld);
+    QObject::connect(ui->saveSlots_world_currentWorld, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setCurrentEditorWorld);
+    QObject::connect(ui->saveSlots_course_currentLevel, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_setCurrentEditorLevel);
+    QObject::connect(ui->saveSlots_world_toadHouse, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_world_setToadHouse);
+    QObject::connect(ui->saveSlots_world_toadRescue, &QComboBox::currentIndexChanged, this, &MainWindow::saveSlots_world_setToadRescue);
 }
 
 MainWindow::~MainWindow() {
@@ -91,6 +96,19 @@ MainWindow::~MainWindow() {
     }
     // if the file doesn't exist, do nothing; the user doesn't care about settings so why make it
 }
+
+
+void MainWindow::closeEvent(QCloseEvent* event) {
+    if (penguinData.settings.askToClose && penguinData.fileOpen && std::memcmp(&penguinData.savedata, &penguinData.savedSavedata, sizeof(SaveData)) != 0) {
+        if (confirmQuit()) {
+            event->accept();
+        } else {
+            event->ignore();
+        }
+    } else {
+        event->accept();
+    }
+} 
 
 /* penguin */
 
@@ -109,8 +127,21 @@ void MainWindow::openSettings() {
     // save settings after closing the settings window
     file.open(QIODevice::WriteOnly);
     file.write(reinterpret_cast<char*>(&penguinData.settings), sizeof(PenguinData::settings));
-    //displayInfo(QString::number(penguinData.settings.maintainPosition));
     file.close();
+}
+
+bool MainWindow::confirmQuit() {
+    QString str = "There are unsaved changes. Do you want to save before closing?";
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "Penguin", str, QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+
+    if (reply == QMessageBox::Save) {
+        saveFileAs();
+        return true;
+    } else if (reply == QMessageBox::Discard) {
+        return true;
+    } else if (reply == QMessageBox::Cancel) {
+        return false;
+    }    
 }
 
 void MainWindow::displayInfo(QString str, int type) {
@@ -137,7 +168,7 @@ void MainWindow::displayInfo(QString str, int type) {
             }
         }
     } else if (penguinData.settings.logSite == LogSite::Log_StatusBar) {
-        // status bar logging
+       statusBar()->showMessage(tr(str.toStdString().c_str()), 10000);
     }
 }
 
@@ -197,6 +228,8 @@ void MainWindow::loadFields() {
 
 
     loadPlayerFields();
+    loadWorldFields();
+    loadCourseFields();
 }
 
 void MainWindow::loadPlayerFields() {
@@ -214,6 +247,93 @@ void MainWindow::loadPlayerFields() {
 
     ui->saveSlots_playerCharacter->setCurrentIndex(penguinData.savedata.saveSlots[penguinData.currentSlot].playerCharacter[penguinData.currentPlayer]);
     ui->saveSlots_playerPowerup->setCurrentIndex(penguinData.savedata.saveSlots[penguinData.currentSlot].playerPowerup[penguinData.currentPlayer]);
+}
+
+// see the function below for why this exists
+u8 getIndex_load(u8 currentWorld, u8 currentLevel) {
+    u8 currentIndex = STAGE_1;
+    switch (currentWorld) {
+        case WORLD_1: // fallthrough
+        case WORLD_2: {
+            if (currentLevel == STAGE_6) currentIndex = STAGE_6;
+            else if (currentLevel == STAGE_TOWER) currentIndex = 6;
+            else if (currentLevel == STAGE_CASTLE) currentIndex = 7;
+            else if (currentLevel == STAGE_CANNON) currentIndex = 8;
+            else currentIndex = 0;
+            break;
+        }
+        case WORLD_3: // fallthrough
+        case WORLD_5: {
+            if (currentLevel == STAGE_GHOST_HOUSE) currentIndex = 5;
+            else if (currentLevel == STAGE_TOWER) currentIndex = 6;
+            else if (currentLevel == STAGE_CASTLE) currentIndex = 7;
+            else if (currentLevel == STAGE_CANNON) currentIndex = 8;
+            else currentIndex = 0;
+            break;
+        }
+        case WORLD_4: {
+            if (currentLevel == STAGE_GHOST_HOUSE) currentIndex = 5;
+            else if (currentLevel == STAGE_TOWER) currentIndex = 6;
+            else if (currentLevel == STAGE_CASTLE) currentIndex = 7;
+            else if (currentLevel == STAGE_DOOMSHIP) currentIndex = 8;
+            else if (currentLevel == STAGE_CANNON) currentIndex = 9;
+            else currentIndex = 0;
+            break;
+        }
+        case WORLD_6: {
+            if (currentLevel == STAGE_6) currentIndex = STAGE_6;
+            else if (currentLevel == STAGE_TOWER) currentIndex = 6;
+            else if (currentLevel == STAGE_CASTLE) currentIndex = 7;
+            else if (currentLevel == STAGE_DOOMSHIP) currentIndex = 8;
+            else if (currentLevel == STAGE_CANNON) currentIndex = 9;
+            else currentIndex = 0; // Default
+            break;
+        }
+        case WORLD_7: {
+            if (currentLevel == STAGE_6) currentIndex = STAGE_6;
+            else if (currentLevel == STAGE_GHOST_HOUSE) currentIndex = 6;
+            else if (currentLevel == STAGE_TOWER) currentIndex = 7;
+            else if (currentLevel == STAGE_CASTLE) currentIndex = 8;
+            else currentIndex = 0; // Default
+            break;
+        }
+        case WORLD_8: {
+            if (currentLevel == STAGE_6) currentIndex = STAGE_6;
+            else if (currentLevel == STAGE_7) currentIndex = STAGE_7;
+            else if (currentLevel == STAGE_TOWER) currentIndex = 7;
+            else if (currentLevel == STAGE_CASTLE) currentIndex = 8;
+            else if (currentLevel == STAGE_DOOMSHIP) currentIndex = 9;
+            else currentIndex = 0; // Default
+            break;
+        }
+        case WORLD_9: {
+            if (currentLevel <= STAGE_8) currentIndex = currentLevel;
+            else currentIndex = 0; // Default
+            break;
+        }
+        default: {
+            currentIndex = 0; // Default
+            break;
+        }
+    }    
+    return currentIndex;
+}
+void MainWindow::loadWorldFields() {
+    ui->saveSlots_world_currentWorld->setCurrentIndex(penguinData.currentWorld);
+    ui->saveSlots_course_currentLevel->setCurrentIndex(0);
+    ui->saveSlots_world_toadHouse->setCurrentIndex(penguinData.savedata.saveSlots[penguinData.currentSlot].startingMushroomHouseType[penguinData.currentWorld]);
+
+    for (int i = 0; i < WORLD_COUNT; i++) {
+        u8 level = penguinData.savedata.saveSlots[penguinData.currentSlot].toadRescueLevel[i];
+            ui->saveSlots_world_toadRescue->setCurrentIndex(getIndex_load(penguinData.currentWorld, level));
+    }
+
+
+    // todo - other stuffs
+}
+
+void MainWindow::loadCourseFields() {
+
 }
 /* file i/o */
 
@@ -292,7 +412,7 @@ bool MainWindow::openFile() {
 
 
     penguinData.savedata = savedata;
-
+    penguinData.savedSavedata = savedata;
     file.close();
     displayInfo("Successfully opened file.", DIT_Information);
     currentFilename = QString::fromStdString(filename);
@@ -326,7 +446,7 @@ bool MainWindow::saveFile(bool saveAs) {
         return false;  
     }
     SaveData savedata = penguinData.savedata;
-
+    penguinData.savedSavedata = penguinData.savedata;
     // swap endianness again
     savedata.header.version = PenguinData::swapEndianness16(savedata.header.version);
 

@@ -26,12 +26,15 @@ public:
     // loads fields based on opened save file
     void loadFields();
     void loadPlayerFields();
-
+    void loadWorldFields();
+    void loadCourseFields();
     PenguinData penguinData;
 public slots:
     /* penguin */
     // opens the settings window
     void openSettings();
+    // called when the user wants to quit
+    
 
     /* file i/o */
     // return true if file opening was successful
@@ -49,7 +52,8 @@ public slots:
     void saveSlots_setCurrentSlot();
     void saveSlots_setCurrentPlayer();
     void saveSlots_setCurrentEditorWorld();
-
+    void saveSlots_setCurrentEditorLevel();
+    
     void saveSlots_setLevelScore();
     void saveSlots_setStaffCreditsScore();
     void saveSlots_setGameCompletion();
@@ -70,9 +74,15 @@ public slots:
     void saveSlots_setPlayerPowerup();
 
     /* save slots -> world/course specifics */
+    void saveSlots_world_setToadHouse();
+    void saveSlots_world_setToadRescue();
 private:
+    // returns if the user wants to quit (regardless of whether or not they also chose to save)
+    bool confirmQuit();
     Ui::MainWindow* ui;
     PenguinSettings* settingsWindow;
 
     QString currentFilename;
+protected:
+    void closeEvent(QCloseEvent* event) override;
 };
