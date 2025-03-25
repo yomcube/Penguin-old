@@ -7,7 +7,7 @@
 #pragma pack(push, 1)
 struct SaveData {
     struct Header {
-        char magic[4]; // 'SMN' + region identifier.
+        /*0x000*/ char magic[4]; // 'SMN' + region identifier.
         /*
             E - North American
             P - European, Australian
@@ -18,12 +18,12 @@ struct SaveData {
         */
 
         //u8 version[2];						// version and subversion; always 0xE and 0x0.
-        /*0x000*/ u16 version;
-        /*0x002*/ u8 lastSelectedFile;				// 0 to 2.
-        /*0x003*/ u8 _7;								// unused. speculated to be padding.
-        /*0x004*/ u16 freeModePlayCount[WORLD_COUNT][STAGE_COUNT];
-        /*0x34C*/ u16 coinBattlePlayCount[WORLD_COUNT][STAGE_COUNT];
-        /*0x694*/ u16 extraModesUnlockedWorlds;		// worlds unlocked in extra modes.
+        /*0x004*/ u16 version;
+        /*0x006*/ u8 lastSelectedFile;				// 0 to 2.
+        /*0x007*/ u8 _7;								// unused. speculated to be padding.
+        /*0x008*/ u16 freeModePlayCount[WORLD_COUNT][STAGE_COUNT];
+        /*0x350*/ u16 coinBattlePlayCount[WORLD_COUNT][STAGE_COUNT];
+        /*0x698*/ u16 extraModesUnlockedWorlds;		// worlds unlocked in extra modes.
         /*0x69A*/ u16 _69A;							// unused. speculated to be padding.
         /*0x69C*/ u32 crc32;							// calculated checksum (excluding the magic)
     };
